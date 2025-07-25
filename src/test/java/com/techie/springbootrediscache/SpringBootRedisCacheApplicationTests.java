@@ -39,7 +39,7 @@ class SpringBootRedisCacheApplicationTests {
 
     @Container
     @ServiceConnection
-    static GenericContainer redis = new GenericContainer(DockerImageName.parse("redis:7.4.2"))
+    static GenericContainer redis = new GenericContainer(DockerImageName.parse("redis:8.2-rc1-alpine3.22"))
             .withExposedPorts(6379);
 
     @Autowired
