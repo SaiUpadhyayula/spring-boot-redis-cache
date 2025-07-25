@@ -1,5 +1,5 @@
 services:
   redis:
-    image: redis:7.4.2
+    image: redis:8.2-rc1-alpine3.22
     ports:
       - "6379:6379"
