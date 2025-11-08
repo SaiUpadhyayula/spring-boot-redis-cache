@@ -5,6 +5,9 @@ import com.techie.springbootrediscache.dto.ProductDto;
 import com.techie.springbootrediscache.entity.Product;
 import com.techie.springbootrediscache.repository.ProductRepository;
 import com.techie.springbootrediscache.service.ProductService;
+import jakarta.validation.constraints.AssertTrue;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
 @AutoConfigureMockMvc
+@Slf4j
 class SpringBootRedisCacheApplicationTests {
 
     @Container
@@ -90,17 +94,25 @@ class SpringBootRedisCacheApplicationTests {
         productRepository.save(product);
 
         // Step 2: Fetch product
+        long start = System.currentTimeMillis();
         mockMvc.perform(MockMvcRequestBuilders.get("/api/product/" + product.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Phone"));
+        long end = System.currentTimeMillis();
 
         Mockito.verify(productRepositorySpy, Mockito.times(1)).findById(product.getId());
+        final long dbReadLatency = end - start;
 
         Mockito.clearInvocations(productRepositorySpy);
-
+        start = System.currentTimeMillis();
         mockMvc.perform(MockMvcRequestBuilders.get("/api/product/" + product.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Phone"));
+        end = System.currentTimeMillis();
+        final long redisReadLatency = end - start;
+
+        log.info("Time taken to read from db is {} ms, and from redis cache is {} ms", dbReadLatency, redisReadLatency);
+        Assertions.assertTrue(dbReadLatency > redisReadLatency);
 
         Mockito.verify(productRepositorySpy, Mockito.times(0)).findById(product.getId());
     }
